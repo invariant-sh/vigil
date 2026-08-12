@@ -1,0 +1,61 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://invariant.sh/schemas/vigil/audit_event.v1.schema.json",
+  "title": "Vigil Audit Event v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "timestamp",
+    "decision_id",
+    "project",
+    "environment",
+    "workflow_id",
+    "request_id",
+    "request_fingerprint",
+    "action",
+    "reason_code",
+    "requested_model",
+    "workflow_call_count",
+    "workflow_cost"
+  ],
+  "properties": {
+    "schema_version": { "type": "string", "const": "1" },
+    "timestamp": { "type": "string", "minLength": 1 },
+    "decision_id": { "type": "string", "minLength": 1 },
+    "policy_hash": { "type": ["string", "null"] },
+    "project": { "type": "string", "minLength": 1 },
+    "environment": { "type": "string", "minLength": 1 },
+    "workflow_id": { "type": "string", "minLength": 1 },
+    "request_id": { "type": "string", "minLength": 1 },
+    "request_fingerprint": { "type": "string", "minLength": 1 },
+    "action": { "type": "string", "enum": ["allow", "block", "route"] },
+    "reason_code": { "type": "string", "minLength": 1 },
+    "requested_model": { "type": "string", "minLength": 1 },
+    "effective_model": { "type": ["string", "null"] },
+    "estimated_cost": {
+      "oneOf": [
+        { "type": "null" },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["micro_usd", "display"],
+          "properties": {
+            "micro_usd": { "type": "integer", "minimum": 0 },
+            "display": { "type": "string" }
+          }
+        }
+      ]
+    },
+    "workflow_call_count": { "type": "integer", "minimum": 0 },
+    "workflow_cost": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["micro_usd", "display"],
+      "properties": {
+        "micro_usd": { "type": "integer", "minimum": 0 },
+        "display": { "type": "string" }
+      }
+    }
+  }
+}

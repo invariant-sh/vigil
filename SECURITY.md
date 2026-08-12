@@ -1,7 +1,8 @@
-# Security Policy
+# Vigil Security Policy
 
-This repository is private and early-stage.
+This repository is currently private / early-stage.
 
-Do not open public issues with exploit details. Contact the maintainers via the [Invariant](https://github.com/invariant-sh) org.
+If you believe you have found a security issue, contact the Invariant Labs maintainers
+through the organization channel rather than opening a public issue.
 
-When this project ships publicly, this file will expand to match Maul's SECURITY.md (credentials, logging, reporting).
+Do not include secrets, production prompts, or customer data in reports.

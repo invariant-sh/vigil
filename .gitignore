@@ -4,5 +4,23 @@
 .env.*
 __pycache__/
 *.pyc
+*.pyo
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+.coverage
+.coverage.*
+htmlcov/
+coverage.json
+dist/
+build/
+*.egg-info/
+.venv/
+venv/
+.hypothesis/
 /target
 node_modules/
+artifacts/*.jsonl
+!artifacts/.gitkeep
+# Local from-maul draft only — example contracts must be tracked.
+/vigil.suggestions.yaml

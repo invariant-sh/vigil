@@ -1,0 +1,71 @@
+{
+  "schema_version": "0.1",
+  "total_proxy_requests": 4,
+  "billable_llm_calls": 4,
+  "faults_injected": 3,
+  "average_latency_ms": 100.0,
+  "budget_snapshot": {
+    "calls_reserved": 5,
+    "calls_limit": 12,
+    "observed_cost_usd": { "micro_usd": 900, "display": "$0.000900" },
+    "cost_limit_usd": { "micro_usd": 750000, "display": "$0.750000" }
+  },
+  "summary": {
+    "successful_requests": 2,
+    "failed_requests": 1,
+    "budget_rejections": 1,
+    "post_fault_successes": 1,
+    "observed_cost_usd": { "micro_usd": 900, "display": "$0.000900" }
+  },
+  "seed": 42,
+  "requests": [
+    {
+      "path": "/v1/chat/completions",
+      "status": 200,
+      "latency_ms": 100,
+      "fault_injected": "force_429",
+      "billable": true,
+      "model": "gpt-4o-mini",
+      "call_number": 1,
+      "budget_decision": "Allowed",
+      "usage": { "Metered": { "prompt_tokens": 10, "completion_tokens": 5, "total_tokens": 15 } },
+      "cost_usd": { "micro_usd": 100, "display": "$0.000100" }
+    },
+    {
+      "path": "/v1/chat/completions",
+      "status": 200,
+      "latency_ms": 100,
+      "fault_injected": "malformed_tool_call_json",
+      "billable": true,
+      "model": "gpt-4o-mini",
+      "call_number": 2,
+      "budget_decision": "Allowed",
+      "usage": { "Metered": { "prompt_tokens": 10, "completion_tokens": 5, "total_tokens": 15 } },
+      "cost_usd": { "micro_usd": 100, "display": "$0.000100" }
+    },
+    {
+      "path": "/v1/chat/completions",
+      "status": 429,
+      "latency_ms": 10,
+      "fault_injected": null,
+      "billable": true,
+      "model": "gpt-4o-mini",
+      "call_number": 3,
+      "budget_decision": "CallCapExceeded",
+      "usage": { "Unavailable": { "reason": "budget" } },
+      "cost_usd": { "micro_usd": 0, "display": "$0.000000" }
+    },
+    {
+      "path": "/v1/chat/completions",
+      "status": 429,
+      "latency_ms": 10,
+      "fault_injected": null,
+      "billable": true,
+      "model": "gpt-4o-mini",
+      "call_number": 4,
+      "budget_decision": "CostCapExceeded",
+      "usage": { "Unavailable": { "reason": "budget" } },
+      "cost_usd": { "micro_usd": 0, "display": "$0.000000" }
+    }
+  ]
+}
