@@ -10,6 +10,24 @@ Agent  →  Maul (chaos)  →  Holds (eval)  →  Vigil (production)
 
 The commercial Vigil Platform (org budgets, dashboards, hosted policy distribution) is separate. The local Rust gateway is a later milestone; this SDK defines the policy semantics that gateway will enforce.
 
+Part of [Invariant Labs](https://github.com/invariant-sh). Site: [getinvariant.sh](https://getinvariant.sh).
+
+## Status
+
+**v0.1 SDK** — open policy foundation. Local validation, Maul-to-policy suggestions, and explainable dry-run. No live gateway yet.
+
+| Capability | Status |
+|---|---|
+| Versioned `vigil.yaml` policy schema | ✅ |
+| `vigil policy validate` | ✅ |
+| `vigil policy from-maul` (suggestions only) | ✅ |
+| `vigil policy dry-run` + redacted `audit.jsonl` | ✅ |
+| Correlation headers for OpenAI-compatible clients | ✅ |
+| uv + Ruff + pytest + Astral `ty` CI | ✅ |
+| CRAP quality gate | ✅ |
+| Local Rust gateway | 🚧 later |
+| Hosted org control plane | 🚧 commercial platform |
+
 ## Install
 
 ```bash
@@ -105,14 +123,20 @@ uv run pytest --cov=vigil --cov-report=term-missing
 uv run python scripts/check_crap.py
 ```
 
-## Related
+## Security
 
-| Tool | Role |
-|---|---|
-| **[Maul](https://github.com/invariant-sh/maul)** | Adversarial proxy — find failure modes |
-| **[Holds](https://github.com/invariant-sh/holds)** | Eval harness — measure task quality |
-| **Vigil** (this repo) | Policy foundation — enforce approved limits |
+See [`SECURITY.md`](./SECURITY.md). Do not commit secrets, production prompts, or unredacted customer data. Suggestions from Maul are never auto-deployed.
 
 ## License
 
 Licensed under the [Apache License, Version 2.0](./LICENSE).
+
+## Related
+
+Part of [Invariant Labs](https://github.com/invariant-sh) — [getinvariant.sh](https://getinvariant.sh).
+
+| Tool | Role |
+|---|---|
+| **[Maul](https://github.com/invariant-sh/maul)** | Adversarial proxy — find failures |
+| **[Holds](https://github.com/invariant-sh/holds)** | Eval harness — measure task quality |
+| **Vigil** (this repo) | Runtime policy SDK — prevent incidents and spend |
