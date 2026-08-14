@@ -115,6 +115,8 @@ Without correlation metadata Vigil can enforce per-request limits but cannot cla
 
 ## Development
 
+See [`CONTRIBUTING.md`](./CONTRIBUTING.md). Short version:
+
 ```bash
 uv run ruff format .
 uv run ruff check .
@@ -126,6 +128,10 @@ uv run python scripts/check_crap.py
 ## Security
 
 See [`SECURITY.md`](./SECURITY.md). Do not commit secrets, production prompts, or unredacted customer data. Suggestions from Maul are never auto-deployed.
+
+## Contributing
+
+PRs welcome under the [`CODE_OF_CONDUCT.md`](./CODE_OF_CONDUCT.md).
 
 ## License
 
