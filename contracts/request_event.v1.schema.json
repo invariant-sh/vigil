@@ -1,0 +1,57 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://invariant.sh/schemas/vigil/request_event.v1.schema.json",
+  "title": "Vigil Request Event v1",
+  "description": "Redacted request evaluation input. Prompt bodies and credentials are forbidden.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "request_id",
+    "workflow_id",
+    "project",
+    "environment",
+    "model",
+    "request_fingerprint",
+    "tool_content_flags"
+  ],
+  "properties": {
+    "schema_version": { "type": "string", "const": "1" },
+    "organization_id": { "$ref": "#/$defs/nonEmptyString" },
+    "request_id": { "$ref": "#/$defs/nonEmptyString" },
+    "workflow_id": { "$ref": "#/$defs/nonEmptyString" },
+    "project": { "$ref": "#/$defs/nonEmptyString" },
+    "environment": { "$ref": "#/$defs/nonEmptyString" },
+    "model": { "$ref": "#/$defs/nonEmptyString" },
+    "request_fingerprint": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "estimated_cost": {
+      "oneOf": [
+        { "type": "null" },
+        { "$ref": "#/$defs/microUsd" }
+      ]
+    },
+    "tool_content_flags": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/nonEmptyString" },
+      "uniqueItems": true
+    }
+  },
+  "$defs": {
+    "nonEmptyString": {
+      "type": "string",
+      "pattern": ".*\\S.*"
+    },
+    "microUsd": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["micro_usd", "display"],
+      "properties": {
+        "micro_usd": { "type": "integer", "minimum": 0 },
+        "display": { "type": "string", "pattern": "^\\$[0-9]+\\.[0-9]{6}$" }
+      }
+    }
+  }
+}

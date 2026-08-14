@@ -1,0 +1,100 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://invariant.sh/schemas/vigil/policy.v1.schema.json",
+  "title": "Vigil Policy v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["version", "scope", "models"],
+  "properties": {
+    "version": { "type": "integer", "const": 1 },
+    "scope": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["project", "environment"],
+      "properties": {
+        "project": { "$ref": "#/$defs/nonEmptyString" },
+        "environment": { "$ref": "#/$defs/nonEmptyString" }
+      }
+    },
+    "budgets": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "max_llm_calls_per_workflow": { "type": "integer", "minimum": 1 },
+        "max_cost_usd_per_workflow": { "type": "number", "exclusiveMinimum": 0 }
+      }
+    },
+    "models": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["allow"],
+      "properties": {
+        "allow": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "$ref": "#/$defs/nonEmptyString" }
+        },
+        "route_after_cost_usd": { "type": "number", "exclusiveMinimum": 0 },
+        "fallback_model": { "$ref": "#/$defs/nonEmptyString" }
+      },
+      "allOf": [
+        {
+          "if": { "required": ["route_after_cost_usd"] },
+          "then": { "required": ["fallback_model"] }
+        }
+      ]
+    },
+    "controls": {
+      "type": "array",
+      "items": {
+        "oneOf": [
+          {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["type", "condition", "max_occurrences"],
+            "properties": {
+              "type": { "const": "circuit_breaker" },
+              "condition": { "const": "repeated_equivalent_request" },
+              "max_occurrences": { "type": "integer", "minimum": 1 }
+            }
+          },
+          {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["type", "mode", "patterns"],
+            "properties": {
+              "type": { "const": "tool_content_guard" },
+              "mode": {
+                "type": "string",
+                "enum": ["block", "redact", "quarantine", "escalate"]
+              },
+              "patterns": {
+                "type": "array",
+                "minItems": 1,
+                "items": { "$ref": "#/$defs/nonEmptyString" }
+              }
+            }
+          }
+        ]
+      }
+    },
+    "audit": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "emit": { "type": "boolean" }
+      }
+    },
+    "status": {
+      "type": "string",
+      "enum": ["suggested", "approved", "deployed", "rejected"]
+    },
+    "owner": { "$ref": "#/$defs/nonEmptyString" }
+  },
+  "$defs": {
+    "nonEmptyString": {
+      "type": "string",
+      "pattern": ".*\\S.*"
+    }
+  }
+}

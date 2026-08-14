@@ -1,0 +1,32 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://invariant.sh/schemas/vigil/policy_distribution.v1.schema.json",
+  "title": "Vigil Policy Distribution Envelope v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "policy_id",
+    "policy_version",
+    "policy_hash",
+    "issued_at",
+    "fail_mode",
+    "policy"
+  ],
+  "properties": {
+    "schema_version": { "type": "string", "const": "1" },
+    "policy_id": { "$ref": "#/$defs/nonEmptyString" },
+    "policy_version": { "$ref": "#/$defs/nonEmptyString" },
+    "policy_hash": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+    "issued_at": { "type": "string", "format": "date-time" },
+    "fail_mode": { "type": "string", "enum": ["fail_open", "fail_closed"] },
+    "policy": { "$ref": "policy.v1.schema.json" },
+    "signature": { "type": ["string", "null"], "minLength": 1 }
+  },
+  "$defs": {
+    "nonEmptyString": {
+      "type": "string",
+      "pattern": ".*\\S.*"
+    }
+  }
+}

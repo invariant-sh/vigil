@@ -1,0 +1,49 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://invariant.sh/schemas/vigil/gateway_error.v1.schema.json",
+  "title": "Vigil Gateway Error v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["error"],
+  "properties": {
+    "error": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["type", "code", "message", "retryable"],
+      "properties": {
+        "type": { "const": "vigil_error" },
+        "code": {
+          "type": "string",
+          "enum": [
+            "authentication_failed",
+            "attribution_required",
+            "policy_unavailable",
+            "policy_rejected",
+            "rate_limited",
+            "upstream_unavailable",
+            "unsupported_endpoint"
+          ]
+        },
+        "message": { "type": "string", "minLength": 1 },
+        "retryable": { "type": "boolean" },
+        "request_id": { "type": "string", "minLength": 1 },
+        "decision_id": { "type": "string", "minLength": 1 },
+        "reason_code": {
+          "type": "string",
+          "enum": [
+            "allowed",
+            "model_not_allowed",
+            "call_cap_exceeded",
+            "cost_cap_exceeded",
+            "circuit_breaker_tripped",
+            "tool_content_blocked",
+            "routed_to_fallback",
+            "no_compliant_fallback"
+          ]
+        },
+        "policy_version": { "type": "string", "minLength": 1 },
+        "policy_hash": { "type": "string", "pattern": "^[a-f0-9]{64}$" }
+      }
+    }
+  }
+}

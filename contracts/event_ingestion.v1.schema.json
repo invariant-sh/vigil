@@ -1,0 +1,18 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://invariant.sh/schemas/vigil/event_ingestion.v1.schema.json",
+  "title": "Vigil Event Ingestion Batch v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "gateway_id", "events"],
+  "properties": {
+    "schema_version": { "type": "string", "const": "1" },
+    "gateway_id": { "type": "string", "pattern": ".*\\S.*" },
+    "events": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 500,
+      "items": { "$ref": "audit_event.v1.schema.json" }
+    }
+  }
+}

@@ -1,0 +1,215 @@
+{
+  "schema_version": "1",
+  "description": "Language-neutral policy evaluation vectors. Costs are micro-USD.",
+  "cases": [
+    {
+      "name": "allowed_request",
+      "policy": {
+        "version": 1,
+        "scope": { "project": "support-agent", "environment": "production" },
+        "budgets": {
+          "max_llm_calls_per_workflow": 3,
+          "max_cost_usd_per_workflow": 1.0
+        },
+        "models": { "allow": ["gpt-4o-mini"] },
+        "controls": [],
+        "audit": { "emit": true },
+        "status": "deployed"
+      },
+      "state": { "workflow_id": "wf-1", "call_count": 0, "cost_micro_usd": 0, "fingerprint_counts": [] },
+      "event": {
+        "request_id": "req-1",
+        "workflow_id": "wf-1",
+        "project": "support-agent",
+        "environment": "production",
+        "model": "gpt-4o-mini",
+        "request_fingerprint": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "estimated_cost_micro_usd": 250000,
+        "tool_content_flags": []
+      },
+      "expected": {
+        "action": "allow",
+        "reason_code": "allowed",
+        "effective_model": "gpt-4o-mini",
+        "billed": true
+      }
+    },
+    {
+      "name": "model_not_allowed",
+      "policy": {
+        "version": 1,
+        "scope": { "project": "support-agent", "environment": "production" },
+        "models": { "allow": ["gpt-4o-mini"] }
+      },
+      "state": { "workflow_id": "wf-1", "call_count": 0, "cost_micro_usd": 0, "fingerprint_counts": [] },
+      "event": {
+        "request_id": "req-2",
+        "workflow_id": "wf-1",
+        "project": "support-agent",
+        "environment": "production",
+        "model": "gpt-4.1",
+        "request_fingerprint": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+        "estimated_cost_micro_usd": 100000,
+        "tool_content_flags": []
+      },
+      "expected": {
+        "action": "block",
+        "reason_code": "model_not_allowed",
+        "effective_model": null,
+        "billed": false
+      }
+    },
+    {
+      "name": "call_cap_exceeded",
+      "policy": {
+        "version": 1,
+        "scope": { "project": "support-agent", "environment": "production" },
+        "budgets": { "max_llm_calls_per_workflow": 1 },
+        "models": { "allow": ["gpt-4o-mini"] }
+      },
+      "state": { "workflow_id": "wf-1", "call_count": 1, "cost_micro_usd": 0, "fingerprint_counts": [] },
+      "event": {
+        "request_id": "req-3",
+        "workflow_id": "wf-1",
+        "project": "support-agent",
+        "environment": "production",
+        "model": "gpt-4o-mini",
+        "request_fingerprint": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
+        "estimated_cost_micro_usd": 100000,
+        "tool_content_flags": []
+      },
+      "expected": {
+        "action": "block",
+        "reason_code": "call_cap_exceeded",
+        "effective_model": null,
+        "billed": false
+      }
+    },
+    {
+      "name": "cost_cap_exceeded",
+      "policy": {
+        "version": 1,
+        "scope": { "project": "support-agent", "environment": "production" },
+        "budgets": { "max_cost_usd_per_workflow": 1.0 },
+        "models": { "allow": ["gpt-4o-mini"] }
+      },
+      "state": { "workflow_id": "wf-1", "call_count": 1, "cost_micro_usd": 900000, "fingerprint_counts": [] },
+      "event": {
+        "request_id": "req-4",
+        "workflow_id": "wf-1",
+        "project": "support-agent",
+        "environment": "production",
+        "model": "gpt-4o-mini",
+        "request_fingerprint": "dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd",
+        "estimated_cost_micro_usd": 200000,
+        "tool_content_flags": []
+      },
+      "expected": {
+        "action": "block",
+        "reason_code": "cost_cap_exceeded",
+        "effective_model": null,
+        "billed": false
+      }
+    },
+    {
+      "name": "tool_content_blocked",
+      "policy": {
+        "version": 1,
+        "scope": { "project": "support-agent", "environment": "production" },
+        "models": { "allow": ["gpt-4o-mini"] },
+        "controls": [
+          {
+            "type": "tool_content_guard",
+            "mode": "block",
+            "patterns": ["instruction_override"]
+          }
+        ]
+      },
+      "state": { "workflow_id": "wf-1", "call_count": 0, "cost_micro_usd": 0, "fingerprint_counts": [] },
+      "event": {
+        "request_id": "req-5",
+        "workflow_id": "wf-1",
+        "project": "support-agent",
+        "environment": "production",
+        "model": "gpt-4o-mini",
+        "request_fingerprint": "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee",
+        "estimated_cost_micro_usd": 100000,
+        "tool_content_flags": ["instruction_override"]
+      },
+      "expected": {
+        "action": "block",
+        "reason_code": "tool_content_blocked",
+        "effective_model": null,
+        "billed": false
+      }
+    },
+    {
+      "name": "circuit_breaker_tripped",
+      "policy": {
+        "version": 1,
+        "scope": { "project": "support-agent", "environment": "production" },
+        "models": { "allow": ["gpt-4o-mini"] },
+        "controls": [
+          {
+            "type": "circuit_breaker",
+            "condition": "repeated_equivalent_request",
+            "max_occurrences": 2
+          }
+        ]
+      },
+      "state": {
+        "workflow_id": "wf-1",
+        "call_count": 2,
+        "cost_micro_usd": 0,
+        "fingerprint_counts": [
+          ["ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff", 2]
+        ]
+      },
+      "event": {
+        "request_id": "req-6",
+        "workflow_id": "wf-1",
+        "project": "support-agent",
+        "environment": "production",
+        "model": "gpt-4o-mini",
+        "request_fingerprint": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
+        "estimated_cost_micro_usd": 100000,
+        "tool_content_flags": []
+      },
+      "expected": {
+        "action": "block",
+        "reason_code": "circuit_breaker_tripped",
+        "effective_model": null,
+        "billed": false
+      }
+    },
+    {
+      "name": "routed_to_fallback",
+      "policy": {
+        "version": 1,
+        "scope": { "project": "support-agent", "environment": "production" },
+        "models": {
+          "allow": ["gpt-4.1", "gpt-4o-mini"],
+          "route_after_cost_usd": 0.4,
+          "fallback_model": "gpt-4o-mini"
+        }
+      },
+      "state": { "workflow_id": "wf-1", "call_count": 1, "cost_micro_usd": 400000, "fingerprint_counts": [] },
+      "event": {
+        "request_id": "req-7",
+        "workflow_id": "wf-1",
+        "project": "support-agent",
+        "environment": "production",
+        "model": "gpt-4.1",
+        "request_fingerprint": "1111111111111111111111111111111111111111111111111111111111111111",
+        "estimated_cost_micro_usd": 100000,
+        "tool_content_flags": []
+      },
+      "expected": {
+        "action": "route",
+        "reason_code": "routed_to_fallback",
+        "effective_model": "gpt-4o-mini",
+        "billed": true
+      }
+    }
+  ]
+}
