@@ -19,6 +19,10 @@ class UnsupportedReportVersionError(MaulReportError):
     """Raised when a Maul report schema_version is not supported."""
 
 
+class HoldsBaselineError(VigilError):
+    """Raised when a Holds baseline cannot be used to gate routing suggestions."""
+
+
 class EventSourceError(VigilError):
     """Raised when dry-run request events cannot be loaded."""
 

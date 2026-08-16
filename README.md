@@ -20,7 +20,8 @@ Part of [Invariant Labs](https://github.com/invariant-sh). Site: [getinvariant.s
 |---|---|
 | Versioned `vigil.yaml` policy schema | ✅ |
 | `vigil policy validate` | ✅ |
-| `vigil policy from-maul` (suggestions only) | ✅ |
+| `vigil policy from-maul` (suggestions only) | ✅ Maul `0.1`/`0.2`; routing gated on Holds |
+| `vigil policy dry-run` + redacted `audit.jsonl` | ✅ |
 | `vigil policy dry-run` + redacted `audit.jsonl` | ✅ |
 | Correlation headers for OpenAI-compatible clients | ✅ |
 | uv + Ruff + pytest + Astral `ty` CI | ✅ |
@@ -45,6 +46,11 @@ uv run vigil policy validate --policy contracts/policy.v1.example.yaml
 uv run vigil policy from-maul path/to/reliability_report.json \
   --output vigil.suggestions.yaml
 
+# Optional: gate model_routing on a Holds baseline that passed
+uv run vigil policy from-maul path/to/reliability_report.json \
+  --output vigil.suggestions.yaml \
+  --holds-baseline path/to/baseline.json
+
 # Dry-run recorded events against a policy
 uv run vigil policy dry-run \
   --policy vigil.yaml \
@@ -53,7 +59,7 @@ uv run vigil policy dry-run \
   --audit artifacts/audit.jsonl
 ```
 
-See [`examples/support_agent/`](./examples/support_agent/) for a full walkthrough.
+See [`examples/support_agent/`](./examples/support_agent/) and [`docs/stack-walkthrough.md`](./docs/stack-walkthrough.md). Maul report schemas `0.1` and `0.2` are supported.
 
 ## Policy schema (v1)
 

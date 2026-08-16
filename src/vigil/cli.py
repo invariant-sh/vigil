@@ -11,6 +11,7 @@ from vigil import __version__
 from vigil.adapters.audit.jsonl_sink import JsonlAuditSink, JsonlDecisionSink
 from vigil.adapters.config.loader import YamlPolicyLoader
 from vigil.adapters.events.jsonl import JsonlEventSource
+from vigil.adapters.holds.baseline_reader import JsonHoldsBaselineReader
 from vigil.adapters.maul.report_reader import JsonMaulReportReader
 from vigil.adapters.runtime import SystemClock, UuidFactory
 from vigil.adapters.suggestions_writer import YamlSuggestionWriter
@@ -22,6 +23,7 @@ from vigil.domain.errors import (
     AuditError,
     DryRunError,
     EventSourceError,
+    HoldsBaselineError,
     MaulReportError,
     PolicyValidationError,
     UnsupportedReportVersionError,
@@ -97,8 +99,22 @@ def from_maul_command(
     environment: Annotated[
         str, typer.Option("--environment", help="Environment for the draft scope")
     ] = "production",
+    holds_baseline: Annotated[
+        Path | None,
+        typer.Option(
+            "--holds-baseline",
+            help="Optional Holds baseline proving fallback-model quality for routing suggestions",
+        ),
+    ] = None,
 ) -> None:
     """Convert a Maul report into human-reviewable policy suggestions."""
+    quality = None
+    if holds_baseline is not None:
+        try:
+            quality = JsonHoldsBaselineReader().read(holds_baseline)
+        except HoldsBaselineError as error:
+            typer.secho(f"invalid Holds baseline: {error}", fg=typer.colors.RED, err=True)
+            raise typer.Exit(code=ExitCode.INVALID_HOLDS_BASELINE) from error
     service = FromMaulService(
         report_reader=JsonMaulReportReader(),
         suggestion_writer=YamlSuggestionWriter(),
@@ -109,6 +125,7 @@ def from_maul_command(
             output_path=output,
             project=project,
             environment=environment,
+            holds_quality=quality,
         )
     except UnsupportedReportVersionError as error:
         typer.secho(f"unsupported report: {error}", fg=typer.colors.RED, err=True)

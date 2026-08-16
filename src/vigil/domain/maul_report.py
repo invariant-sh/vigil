@@ -1,4 +1,4 @@
-"""Typed view of a Maul reliability_report.json (schema 0.1)."""
+"""Typed view of a Maul reliability_report.json (schema 0.1 or 0.2)."""
 
 from __future__ import annotations
 
@@ -13,6 +13,9 @@ class MaulRequestFinding:
     fault_injected: str | None
     budget_decision: str | None
     model: str | None
+    session_id: str | None = None
+    sequence: int | None = None
+    status: int | None = None
 
 
 @dataclass(frozen=True, slots=True)
@@ -27,3 +30,7 @@ class MaulReport:
     observed_cost_micro_usd: int | None = None
     calls_limit: int | None = None
     cost_limit_micro_usd: int | None = None
+    run_id: str | None = None
+    unrecovered_sessions: int = 0
+    recovery_events: int = 0
+    faults_injected: int = 0
