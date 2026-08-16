@@ -28,6 +28,8 @@ class EvidenceRef:
     seed: int | None
     request_index: int | None
     budget_decision: str | None = None
+    applicability: str = "openai-compatible-agent-traffic"
+    confidence_note: str | None = None
 
     def to_dict(self) -> dict[str, Any]:
         """Serialize evidence for draft YAML/JSON."""
@@ -37,6 +39,8 @@ class EvidenceRef:
             "seed": self.seed,
             "request_index": self.request_index,
             "budget_decision": self.budget_decision,
+            "applicability": self.applicability,
+            "confidence_note": self.confidence_note,
         }
 
 

@@ -5,6 +5,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from pathlib import Path
 
+from vigil.domain.holds_baseline import HoldsQualityEvidence
 from vigil.domain.maul_report import MaulReport, MaulRequestFinding
 from vigil.domain.money import MicroUsd
 from vigil.domain.policy import CircuitBreakerControl, ToolContentGuardControl
@@ -18,6 +19,10 @@ from vigil.ports import MaulReportReader, SuggestionWriter
 DEFAULT_CIRCUIT_MAX = 3
 DEFAULT_CALL_CAP = 12
 DEFAULT_COST_CAP_USD = 0.75
+DEFAULT_ROUTE_AFTER_USD = 0.40
+RETRY_FAULTS = frozenset({"force_429", "force_500"})
+TOOL_FAULTS = frozenset({"malformed_tool_call_json"})
+APPLICABILITY = "openai-compatible-agent-traffic"
 
 
 @dataclass(frozen=True, slots=True)
@@ -47,10 +52,11 @@ class FromMaulService:
         output_path: Path,
         project: str = "unnamed-project",
         environment: str = "production",
+        holds_quality: HoldsQualityEvidence | None = None,
     ) -> FromMaulResult:
         """Read a Maul report and write a suggestion draft."""
         report = self._report_reader.read(report_path)
-        suggestions = _suggestions_from_report(report)
+        suggestions = _suggestions_from_report(report, holds_quality=holds_quality)
         draft = SuggestionDraft(
             version=1,
             status="suggested",
@@ -65,10 +71,17 @@ class FromMaulService:
         return FromMaulResult(draft=draft, output_path=written)
 
 
-def _suggestions_from_report(report: MaulReport) -> tuple[PolicySuggestion, ...]:
+def _suggestions_from_report(
+    report: MaulReport,
+    *,
+    holds_quality: HoldsQualityEvidence | None,
+) -> tuple[PolicySuggestion, ...]:
     suggestions: list[PolicySuggestion] = []
     suggestions.extend(_budget_suggestions(report))
     suggestions.extend(_fault_suggestions(report))
+    routing = _routing_suggestion(report, holds_quality)
+    if routing is not None:
+        suggestions.append(routing)
     return tuple(_dedupe(suggestions))
 
 
@@ -91,10 +104,9 @@ def _call_cap_suggestion(report: MaulReport) -> PolicySuggestion | None:
     hits = _findings_with_budget(report, "CallCapExceeded")
     if not hits and report.budget_rejections <= 0:
         return None
-    if report.calls_limit and report.calls_limit > 0:
-        proposed = report.calls_limit
-    else:
-        proposed = DEFAULT_CALL_CAP
+    proposed = (
+        report.calls_limit if report.calls_limit and report.calls_limit > 0 else DEFAULT_CALL_CAP
+    )
     return PolicySuggestion(
         kind="max_llm_calls",
         confidence="high" if hits else "medium",
@@ -139,20 +151,27 @@ def _fault_suggestions(report: MaulReport) -> list[PolicySuggestion]:
 
 
 def _circuit_breaker_suggestion(report: MaulReport) -> PolicySuggestion | None:
-    retry_faults = ("force_429", "force_500")
     hits = [
-        finding for finding in report.request_findings if finding.fault_injected in retry_faults
+        finding for finding in report.request_findings if finding.fault_injected in RETRY_FAULTS
     ]
-    if not hits:
+    if not hits and report.unrecovered_sessions <= 0:
         return None
+    confidence = "high" if report.unrecovered_sessions > 0 else "medium"
     return PolicySuggestion(
         kind="circuit_breaker",
-        confidence="medium",
+        confidence=confidence,
         rationale=(
-            "Maul injected retry/availability faults; a circuit breaker on "
+            "Maul observed retry/availability pressure; a circuit breaker on "
             "repeated_equivalent_request can bound retry loops in production."
         ),
-        evidence=_evidence(report, hits[0]),
+        evidence=_evidence(
+            report,
+            hits[0] if hits else None,
+            confidence_note=(
+                f"unrecovered_sessions={report.unrecovered_sessions}; "
+                f"recovery_events={report.recovery_events}"
+            ),
+        ),
         proposed_control=CircuitBreakerControl(
             condition="repeated_equivalent_request",
             max_occurrences=DEFAULT_CIRCUIT_MAX,
@@ -161,18 +180,14 @@ def _circuit_breaker_suggestion(report: MaulReport) -> PolicySuggestion | None:
 
 
 def _tool_guard_suggestion(report: MaulReport) -> PolicySuggestion | None:
-    hits = [
-        finding
-        for finding in report.request_findings
-        if finding.fault_injected == "malformed_tool_call_json"
-    ]
+    hits = [finding for finding in report.request_findings if finding.fault_injected in TOOL_FAULTS]
     if not hits:
         return None
     return PolicySuggestion(
         kind="tool_content_guard",
         confidence="medium",
         rationale=(
-            "Maul injected malformed tool-call JSON; a tool content guard can "
+            "Maul observed malformed tool-call JSON; a tool content guard can "
             "block known instruction-override patterns at runtime."
         ),
         evidence=_evidence(report, hits[0]),
@@ -183,11 +198,46 @@ def _tool_guard_suggestion(report: MaulReport) -> PolicySuggestion | None:
     )
 
 
+def _routing_suggestion(
+    report: MaulReport,
+    holds_quality: HoldsQualityEvidence | None,
+) -> PolicySuggestion | None:
+    cost_hits = _findings_with_budget(report, "CostCapExceeded")
+    if not cost_hits:
+        return None
+    if holds_quality is None:
+        return None
+    if not holds_quality.threshold_passed or not holds_quality.model_id:
+        return None
+    return PolicySuggestion(
+        kind="model_routing",
+        confidence="medium",
+        rationale=(
+            "Maul observed cost-cap pressure and a Holds baseline shows the "
+            "fallback model meets the task quality threshold. Routing remains "
+            "a suggestion until a policy owner reviews it."
+        ),
+        evidence=_evidence(
+            report,
+            cost_hits[0],
+            budget_decision="CostCapExceeded",
+            confidence_note=(
+                f"holds_baseline={holds_quality.source_path}; "
+                f"pass_rate={holds_quality.pass_rate}; "
+                f"model_id={holds_quality.model_id}"
+            ),
+        ),
+        proposed_fallback_model=holds_quality.model_id,
+        proposed_route_after_cost_usd=MicroUsd.from_usd(DEFAULT_ROUTE_AFTER_USD),
+    )
+
+
 def _evidence(
     report: MaulReport,
     finding: MaulRequestFinding | None,
     *,
     budget_decision: str | None = None,
+    confidence_note: str | None = None,
 ) -> EvidenceRef:
     return EvidenceRef(
         report_path=report.source_path,
@@ -197,6 +247,8 @@ def _evidence(
         budget_decision=budget_decision
         if budget_decision is not None
         else (None if finding is None else finding.budget_decision),
+        applicability=APPLICABILITY,
+        confidence_note=confidence_note,
     )
 
 

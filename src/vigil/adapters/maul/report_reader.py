@@ -1,4 +1,4 @@
-"""Maul reliability_report.json reader (schema_version 0.1)."""
+"""Maul reliability_report.json reader (schema_version 0.1 and 0.2)."""
 
 from __future__ import annotations
 
@@ -9,7 +9,7 @@ from typing import Any
 from vigil.domain.errors import MaulReportError, UnsupportedReportVersionError
 from vigil.domain.maul_report import MaulReport, MaulRequestFinding
 
-SUPPORTED_SCHEMA_VERSIONS = frozenset({"0.1"})
+SUPPORTED_SCHEMA_VERSIONS = frozenset({"0.1", "0.2"})
 
 
 class JsonMaulReportReader:
@@ -48,10 +48,14 @@ class JsonMaulReportReader:
         if not isinstance(summary, dict):
             msg = "Maul report summary must be an object"
             raise MaulReportError(msg)
-        budget_rejections = summary.get("budget_rejections", 0)
-        if isinstance(budget_rejections, bool) or not isinstance(budget_rejections, int):
-            msg = "summary.budget_rejections must be an integer"
-            raise MaulReportError(msg)
+        budget_rejections = _require_int(
+            summary.get("budget_rejections", 0),
+            "summary.budget_rejections",
+        )
+        unrecovered_sessions = _optional_int(summary.get("unrecovered_sessions")) or 0
+        recovery_events = _optional_int(summary.get("recovery_events"))
+        if recovery_events is None:
+            recovery_events = _optional_int(summary.get("post_fault_successes")) or 0
 
         budget_snapshot = document.get("budget_snapshot") or {}
         if budget_snapshot is not None and not isinstance(budget_snapshot, dict):
@@ -61,13 +65,15 @@ class JsonMaulReportReader:
         cost_limit_micro = None
         if isinstance(budget_snapshot, dict):
             calls_limit = _optional_int(budget_snapshot.get("calls_limit"))
-            cost_limit = budget_snapshot.get("cost_limit_usd")
-            cost_limit_micro = _micro_from_money(cost_limit)
+            cost_limit_micro = _micro_from_money(budget_snapshot.get("cost_limit_usd"))
 
-        observed = summary.get("observed_cost_usd")
-        observed_micro = _micro_from_money(observed)
-
+        observed_micro = _micro_from_money(summary.get("observed_cost_usd"))
         seed = _optional_int(document.get("seed"))
+        run_id = document.get("run_id")
+        if run_id is not None and not isinstance(run_id, str):
+            msg = "run_id must be a string when present"
+            raise MaulReportError(msg)
+        faults_injected = _optional_int(document.get("faults_injected")) or 0
 
         requests_raw = document.get("requests") or []
         if not isinstance(requests_raw, list):
@@ -84,6 +90,10 @@ class JsonMaulReportReader:
             observed_cost_micro_usd=observed_micro,
             calls_limit=calls_limit,
             cost_limit_micro_usd=cost_limit_micro,
+            run_id=run_id,
+            unrecovered_sessions=unrecovered_sessions,
+            recovery_events=recovery_events,
+            faults_injected=faults_injected,
         )
 
 
@@ -103,12 +113,28 @@ def _parse_finding(raw: Any, index: int) -> MaulRequestFinding:
     if model is not None and not isinstance(model, str):
         msg = f"requests[{index}].model must be a string when present"
         raise MaulReportError(msg)
+    session_id = raw.get("session_id")
+    if session_id is not None and not isinstance(session_id, str):
+        msg = f"requests[{index}].session_id must be a string when present"
+        raise MaulReportError(msg)
+    sequence = _optional_int(raw.get("sequence"))
+    status = _optional_int(raw.get("status"))
     return MaulRequestFinding(
         index=index,
         fault_injected=fault,
         budget_decision=budget_decision,
         model=model,
+        session_id=session_id,
+        sequence=sequence,
+        status=status,
     )
+
+
+def _require_int(value: Any, field: str) -> int:
+    if isinstance(value, bool) or not isinstance(value, int):
+        msg = f"{field} must be an integer"
+        raise MaulReportError(msg)
+    return value
 
 
 def _optional_int(value: Any) -> int | None:

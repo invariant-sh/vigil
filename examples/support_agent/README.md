@@ -15,9 +15,14 @@ uv run vigil policy from-maul examples/support_agent/reliability_report.json \
   --output examples/support_agent/vigil.suggestions.yaml \
   --project support-agent \
   --environment production
+
+# Optional Holds quality gate for model_routing suggestions:
+# uv run vigil policy from-maul contracts/maul/reliability_report.v0.2.example.json \
+#   --holds-baseline contracts/holds/baseline.v1.example.json \
+#   --output vigil.suggestions.yaml
 ```
 
-The draft is marked `status: suggested`. A human must review before any deployment.
+The draft is marked `status: suggested`. A human must review before any deployment. Maul schemas `0.1` and `0.2` are accepted.
 
 ## Dry-run recorded traffic
 

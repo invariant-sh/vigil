@@ -1,0 +1,37 @@
+{
+  "schema_version": "1",
+  "suite_hash": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+  "suite_version": 1,
+  "run_id": "holds-baseline-0001",
+  "agent_command": "python agent.py",
+  "application_revision": "abc123",
+  "grader_versions": ["exact_field:1"],
+  "promoted_at": "2026-08-15T12:00:00Z",
+  "reviewer": "platform",
+  "reason": "fallback model meets quality threshold",
+  "model_id": "gpt-4o-mini",
+  "provider": "openai",
+  "temperature": 0.0,
+  "seed": 7,
+  "summary": {
+    "tasks": 1,
+    "attempts": 3,
+    "passed_attempts": 3,
+    "pass_rate": 1.0,
+    "schema_valid_rate": 1.0,
+    "threshold_passed": true,
+    "threshold_failures": []
+  },
+  "task_summaries": [
+    {
+      "task_id": "classify-refund-request",
+      "attempts": 3,
+      "passed": 3,
+      "pass_rate": 1.0,
+      "schema_valid_rate": 1.0,
+      "consistency_rate": 1.0,
+      "threshold_passed": true,
+      "threshold_failures": []
+    }
+  ]
+}
