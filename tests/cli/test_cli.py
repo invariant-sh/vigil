@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from importlib.metadata import distribution
 from pathlib import Path
 
 from typer.testing import CliRunner
@@ -14,7 +15,15 @@ runner = CliRunner()
 def test_version() -> None:
     result = runner.invoke(app, ["--version"])
     assert result.exit_code == 0
-    assert "0.1.0" in result.stdout
+    assert result.stdout.strip() == "0.2.0"
+
+
+def test_installed_distribution_metadata() -> None:
+    dist = distribution("invariant-vigil")
+    scripts = {ep.name for ep in dist.entry_points if ep.group == "console_scripts"}
+    assert dist.metadata["Name"] == "invariant-vigil"
+    assert dist.version == "0.2.0"
+    assert scripts == {"vigil"}
 
 
 def test_validate_command() -> None:

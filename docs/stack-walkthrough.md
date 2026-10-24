@@ -6,6 +6,17 @@ Vigil consumes reviewed Maul evidence and optional Holds quality baselines. Sugg
 
 `vigil policy from-maul` accepts Maul `schema_version` `0.1` and `0.2`. Unsupported versions exit with code `21`.
 
+Generate those reports with the [Maul v0.1.0 release](https://github.com/invariant-sh/maul/releases/tag/v0.1.0). Vigil does not download Maul. Checksum-verified assets (each with a sibling `.sha256`):
+
+| Target | Asset |
+|---|---|
+| Linux x86_64 | [`maul-v0.1.0-x86_64-unknown-linux-gnu.tar.gz`](https://github.com/invariant-sh/maul/releases/download/v0.1.0/maul-v0.1.0-x86_64-unknown-linux-gnu.tar.gz) |
+| Linux arm64 | [`maul-v0.1.0-aarch64-unknown-linux-gnu.tar.gz`](https://github.com/invariant-sh/maul/releases/download/v0.1.0/maul-v0.1.0-aarch64-unknown-linux-gnu.tar.gz) |
+| macOS x86_64 | [`maul-v0.1.0-x86_64-apple-darwin.tar.gz`](https://github.com/invariant-sh/maul/releases/download/v0.1.0/maul-v0.1.0-x86_64-apple-darwin.tar.gz) |
+| macOS arm64 | [`maul-v0.1.0-aarch64-apple-darwin.tar.gz`](https://github.com/invariant-sh/maul/releases/download/v0.1.0/maul-v0.1.0-aarch64-apple-darwin.tar.gz) |
+
+Install steps are in the Vigil [README](../README.md#maul-v010).
+
 Minimum useful evidence: schema/version, scenario and seed, session/workflow ids when present, budget/cost outcome, and the report path.
 
 ## Commands

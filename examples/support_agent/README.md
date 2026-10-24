@@ -22,7 +22,7 @@ uv run vigil policy from-maul examples/support_agent/reliability_report.json \
 #   --output vigil.suggestions.yaml
 ```
 
-The draft is marked `status: suggested`. A human must review before any deployment. Maul schemas `0.1` and `0.2` are accepted.
+The draft is marked `status: suggested`. A human must review before any deployment. Maul report schemas `0.1` and `0.2` are accepted. The fixture matches reports from [Maul v0.1.0](https://github.com/invariant-sh/maul/releases/tag/v0.1.0). Install a checksum-verified binary from that release (`maul-v0.1.0-<target>.tar.gz` plus `.sha256` for Linux and macOS, x86_64 and aarch64). See the [Vigil install section](../../README.md#maul-v010).
 
 ## Dry-run recorded traffic
 

@@ -14,27 +14,76 @@ Part of [Invariant Labs](https://github.com/invariant-sh). Site: [getinvariant.s
 
 ## Status
 
-**v0.1 SDK** — open policy foundation. Local validation, Maul-to-policy suggestions, and explainable dry-run. No live gateway yet.
+**v0.2.0 SDK** — open policy foundation, packaged as the PyPI distribution `invariant-vigil`. Local validation, Maul-to-policy suggestions, and explainable dry-run. No live gateway yet.
 
 | Capability | Status |
 |---|---|
 | Versioned `vigil.yaml` policy schema | ✅ |
 | `vigil policy validate` | ✅ |
-| `vigil policy from-maul` (suggestions only) | ✅ Maul `0.1`/`0.2`; routing gated on Holds |
-| `vigil policy dry-run` + redacted `audit.jsonl` | ✅ |
+| `vigil policy from-maul` (suggestions only) | ✅ Maul report schemas `0.1`/`0.2`; routing gated on Holds |
 | `vigil policy dry-run` + redacted `audit.jsonl` | ✅ |
 | Correlation headers for OpenAI-compatible clients | ✅ |
 | uv + Ruff + pytest + Astral `ty` CI | ✅ |
 | CRAP quality gate | ✅ |
+| PyPI distribution `invariant-vigil` | ✅ release workflow on `v*` tags |
 | Local Rust gateway | 🚧 later |
 | Hosted org control plane | 🚧 commercial platform |
 
 ## Install
 
+Requires Python 3.12+.
+
+The PyPI project name is **`invariant-vigil`**. `vigil` is already registered to an unrelated package. Imports stay `import vigil`, and the console script stays `vigil`.
+
 ```bash
-uv sync --extra dev
+pip install invariant-vigil
+vigil --version
+```
+
+```bash
+uv tool install invariant-vigil
+vigil --version
+```
+
+From a checkout of this repository:
+
+```bash
+uv sync --group dev
 uv run vigil --version
 ```
+
+### Maul v0.1.0
+
+Vigil does not vendor or download Maul. `vigil policy from-maul` reads a `reliability_report.json` produced by [Maul v0.1.0](https://github.com/invariant-sh/maul/releases/tag/v0.1.0). Report schemas `0.1` and `0.2` from that release are both accepted.
+
+Install a checksum-verified binary. Linux x86_64 is shown; the same tag publishes Linux arm64 and macOS x86_64/arm64.
+
+```bash
+tag=v0.1.0
+target=x86_64-unknown-linux-gnu
+# other targets:
+#   aarch64-unknown-linux-gnu
+#   x86_64-apple-darwin
+#   aarch64-apple-darwin
+archive="maul-${tag}-${target}.tar.gz"
+base="https://github.com/invariant-sh/maul/releases/download/${tag}"
+curl -fsSL -o "${archive}" "${base}/${archive}"
+curl -fsSL -o "${archive}.sha256" "${base}/${archive}.sha256"
+sha256sum -c "${archive}.sha256"    # macOS: shasum -a 256 -c "${archive}.sha256"
+tar -xzf "${archive}"
+mkdir -p "$HOME/.local/bin"
+install "maul-${tag}-${target}/maul" "$HOME/.local/bin/maul"
+maul --version
+```
+
+| Target | Asset |
+|---|---|
+| Linux x86_64 | [`maul-v0.1.0-x86_64-unknown-linux-gnu.tar.gz`](https://github.com/invariant-sh/maul/releases/download/v0.1.0/maul-v0.1.0-x86_64-unknown-linux-gnu.tar.gz) |
+| Linux arm64 | [`maul-v0.1.0-aarch64-unknown-linux-gnu.tar.gz`](https://github.com/invariant-sh/maul/releases/download/v0.1.0/maul-v0.1.0-aarch64-unknown-linux-gnu.tar.gz) |
+| macOS x86_64 | [`maul-v0.1.0-x86_64-apple-darwin.tar.gz`](https://github.com/invariant-sh/maul/releases/download/v0.1.0/maul-v0.1.0-x86_64-apple-darwin.tar.gz) |
+| macOS arm64 | [`maul-v0.1.0-aarch64-apple-darwin.tar.gz`](https://github.com/invariant-sh/maul/releases/download/v0.1.0/maul-v0.1.0-aarch64-apple-darwin.tar.gz) |
+
+Each archive has a sibling `.sha256` at the same URL.
 
 ## Quick start
 
@@ -59,7 +108,7 @@ uv run vigil policy dry-run \
   --audit artifacts/audit.jsonl
 ```
 
-See [`examples/support_agent/`](./examples/support_agent/) and [`docs/stack-walkthrough.md`](./docs/stack-walkthrough.md). Maul report schemas `0.1` and `0.2` are supported.
+See [`examples/support_agent/`](./examples/support_agent/) and [`docs/stack-walkthrough.md`](./docs/stack-walkthrough.md). Maul report schemas `0.1` and `0.2` are supported. Changes are listed in [`CHANGELOG.md`](./CHANGELOG.md).
 
 ## Policy schema (v1)
 
@@ -149,6 +198,6 @@ Part of [Invariant Labs](https://github.com/invariant-sh) — [getinvariant.sh](
 
 | Tool | Role |
 |---|---|
-| **[Maul](https://github.com/invariant-sh/maul)** | Adversarial proxy — find failures |
+| **[Maul](https://github.com/invariant-sh/maul)** | Adversarial proxy — find failures. Binaries: [v0.1.0](https://github.com/invariant-sh/maul/releases/tag/v0.1.0) |
 | **[Holds](https://github.com/invariant-sh/holds)** | Eval harness — measure task quality |
 | **Vigil** (this repo) | Runtime policy SDK — prevent incidents and spend |
